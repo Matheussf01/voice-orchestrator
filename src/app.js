@@ -3,6 +3,7 @@ import { Conversation } from '@11labs/client';
 
 let conversation = null;
 
+let assistenteSignedUrl = null;
 
 
 async function iniciarConexaoWebSocket(signedUrl) {
@@ -87,6 +88,11 @@ async function startConversation() {
     const startButton = document.getElementById('startButton');
     const endButton = document.getElementById('endButton');
     
+    if (!assistenteSignedUrl) {
+      alert('Signed URL do assistente não carregado ainda.');
+      return;
+    }
+
     try {
         const hasPermission = await requestMicrophonePermission();
         if (!hasPermission) {
@@ -94,12 +100,8 @@ async function startConversation() {
             return;
         }
 
-        const signedUrl = await getSignedUrl();
-        //const agentId = await getAgentId(); // You can switch to agentID for public agents
-        
         conversation = await Conversation.startSession({
-            signedUrl: signedUrl,
-            //agentId: agentId, // You can switch to agentID for public agents
+            signedUrl: assistenteSignedUrl,   // usa a url salva do assistente
             onConnect: () => {
                 console.log('Connected');
                 updateStatus(true);
@@ -111,14 +113,14 @@ async function startConversation() {
                 updateStatus(false);
                 startButton.disabled = false;
                 endButton.disabled = true;
-                updateSpeakingStatus({ mode: 'listening' }); // Reset to listening mode on disconnect
+                updateSpeakingStatus({ mode: 'listening' });
             },
             onError: (error) => {
                 console.error('Conversation error:', error);
                 alert('An error occurred during the conversation.');
             },
             onModeChange: (mode) => {
-                console.log('Mode changed:', mode); // Debug log to see exact mode object
+                console.log('Mode changed:', mode);
                 updateSpeakingStatus(mode);
             }
         });
@@ -127,6 +129,7 @@ async function startConversation() {
         alert('Failed to start conversation. Please try again.');
     }
 }
+
 
 async function endConversation() {
     if (conversation) {
@@ -141,7 +144,6 @@ document.getElementById('endButton').addEventListener('click', endConversation);
 window.addEventListener('error', function(event) {
     console.error('Global error:', event.error);
 });
-
 
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -163,7 +165,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById("avatar").src = data.foto_url;
     document.body.style.backgroundImage = `url('${data.background_image}')`;
 
-    iniciarConexaoWebSocket(data.signed_url); // sua função de voz aqui
+    assistenteSignedUrl = data.signed_url;  // salva aqui
 
   } catch (err) {
     console.error('Erro ao carregar assistente:', err);
