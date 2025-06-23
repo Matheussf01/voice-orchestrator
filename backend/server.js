@@ -10,7 +10,9 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use('/static', express.static(path.join(__dirname, '../dist')));
+
+// Serve arquivos estáticos (css, js, imgs etc)
+app.use('/static', express.static(path.join(__dirname, '../dist/static')));
 
 // Conexão com o banco de dados
 const db = mysql.createPool({
@@ -20,8 +22,8 @@ const db = mysql.createPool({
     database: process.env.DB_NAME,
 });
 
-// Rota dinâmica para acessar assistente por slug
-app.get('/:slug', async (req, res) => {
+// Rota API para assistente dinâmica por slug
+app.get('/api/assistente/:slug', async (req, res) => {
     const slug = req.params.slug;
     console.log(`🔍 Buscando assistente com slug: ${slug}`);
 
@@ -31,7 +33,7 @@ app.get('/:slug', async (req, res) => {
 
         if (rows.length === 0) {
             console.log('❌ Nenhum assistente encontrado');
-            return res.status(404).send('Assistente não encontrado');
+            return res.status(404).json({ error: 'Assistente não encontrado' });
         }
 
         const assistente = rows[0];
@@ -69,7 +71,6 @@ app.get('/:slug', async (req, res) => {
     }
 });
 
-
 // API antiga fixa (fallback)
 app.get('/api/signed-url', async (req, res) => {
     try {
@@ -101,8 +102,8 @@ app.get('/api/getAgentId', (req, res) => {
     res.json({ agentId: `${agentId}` });
 });
 
-// Fallback para SPA (index.html)
-app.get('*', (req, res) => {
+// Serve SPA - para qualquer rota que NÃO COMEÇE com /api
+app.get(/^\/(?!api).*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
