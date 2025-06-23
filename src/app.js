@@ -116,7 +116,12 @@ window.addEventListener('error', function(event) {
     console.error('Global error:', event.error);
 });
 window.addEventListener('DOMContentLoaded', async () => {
-  const slug = window.location.pathname.replace('/', '') || 'lina';
+  const slug = window.location.pathname.split('/').filter(Boolean).pop() || '';
+
+  if (!slug) {
+    console.warn('Nenhum slug encontrado na URL, não iniciando requisição.');
+    return;
+  }
 
   try {
     const res = await fetch(`/api/assistente/${slug}`);
@@ -129,7 +134,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById("avatar").src = data.foto_url;
     document.body.style.backgroundImage = `url('${data.background_image}')`;
 
-    iniciarConexaoWebSocket(data.signed_url); // ou o que você usar para iniciar a voz
+    iniciarConexaoWebSocket(data.signed_url); // sua função de voz aqui
 
   } catch (err) {
     console.error('Erro ao carregar assistente:', err);
