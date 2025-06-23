@@ -21,7 +21,7 @@ const db = mysql.createPool({
 });
 
 // Rota dinâmica para acessar assistente por slug
-app.get('/:slug', async (req, res) => {
+app.get('/api/assistente/:slug', async (req, res) => {
     const slug = req.params.slug;
     console.log(`🔍 Buscando assistente com slug: ${slug}`);
 
