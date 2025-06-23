@@ -38,7 +38,7 @@ app.get('/:slug', async (req, res) => {
         console.log('✅ Assistente encontrado:', assistente);
 
         const elevenResponse = await fetch(
-            `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?voice_id=${assistente.elevenlabs_voice_id}`,
+            `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${assistente.elevenlabs_voice_id}`,
             {
                 method: 'GET',
                 headers: {
