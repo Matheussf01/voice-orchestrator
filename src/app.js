@@ -3,6 +3,32 @@ import { Conversation } from '@11labs/client';
 
 let conversation = null;
 
+
+
+async function iniciarConexaoWebSocket(signedUrl) {
+  try {
+    conversation = await Conversation.startSession({
+      signedUrl: signedUrl,
+      onConnect: () => {
+        console.log('Conectado à ElevenLabs');
+        updateStatus(true);
+      },
+      onDisconnect: () => {
+        console.log('Desconectado da ElevenLabs');
+        updateStatus(false);
+      },
+      onError: (error) => {
+        console.error('Erro na conversa:', error);
+        alert('Erro na conversa');
+      },
+      onModeChange: (mode) => {
+        updateSpeakingStatus(mode);
+      }
+    });
+  } catch (error) {
+    console.error('Falha ao iniciar conexão:', error);
+  }
+}
 async function requestMicrophonePermission() {
     try {
         await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -115,6 +141,9 @@ document.getElementById('endButton').addEventListener('click', endConversation);
 window.addEventListener('error', function(event) {
     console.error('Global error:', event.error);
 });
+
+
+
 window.addEventListener('DOMContentLoaded', async () => {
   const slug = window.location.pathname.split('/').filter(Boolean).pop() || '';
 
