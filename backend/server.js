@@ -23,17 +23,20 @@ const db = mysql.createPool({
 // Rota dinâmica para acessar assistente por slug
 app.get('/:slug', async (req, res) => {
     const slug = req.params.slug;
+    console.log(`🔍 Buscando assistente com slug: ${slug}`);
 
     try {
         const [rows] = await db.query('SELECT * FROM assistentes WHERE slug = ?', [slug]);
+        console.log('📦 Resultado da query:', rows);
 
         if (rows.length === 0) {
+            console.log('❌ Nenhum assistente encontrado');
             return res.status(404).send('Assistente não encontrado');
         }
 
         const assistente = rows[0];
+        console.log('✅ Assistente encontrado:', assistente);
 
-        // Obter signed URL da ElevenLabs com o voice_id da assistente
         const elevenResponse = await fetch(
             `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?voice_id=${assistente.elevenlabs_voice_id}`,
             {
@@ -45,12 +48,12 @@ app.get('/:slug', async (req, res) => {
         );
 
         if (!elevenResponse.ok) {
+            console.error('❌ Erro ao buscar signed URL da ElevenLabs:', await elevenResponse.text());
             throw new Error('Erro ao buscar signed URL');
         }
 
         const data = await elevenResponse.json();
 
-        // Retorna dados completos do assistente
         res.json({
             nome: assistente.nome,
             descricao: assistente.descricao,
@@ -61,10 +64,11 @@ app.get('/:slug', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('💥 Erro geral:', error);
         res.status(500).json({ error: 'Erro interno ao buscar assistente' });
     }
 });
+
 
 // API antiga fixa (fallback)
 app.get('/api/signed-url', async (req, res) => {
