@@ -115,3 +115,24 @@ document.getElementById('endButton').addEventListener('click', endConversation);
 window.addEventListener('error', function(event) {
     console.error('Global error:', event.error);
 });
+window.addEventListener('DOMContentLoaded', async () => {
+  const slug = window.location.pathname.replace('/', '') || 'lina';
+
+  try {
+    const res = await fetch(`/api/assistente/${slug}`);
+    if (!res.ok) throw new Error('Não foi possível carregar os dados do assistente.');
+
+    const data = await res.json();
+
+    document.getElementById("nome").innerText = data.nome;
+    document.getElementById("descricao").innerText = data.descricao;
+    document.getElementById("avatar").src = data.foto_url;
+    document.body.style.backgroundImage = `url('${data.background_image}')`;
+
+    iniciarConexaoWebSocket(data.signed_url); // ou o que você usar para iniciar a voz
+
+  } catch (err) {
+    console.error('Erro ao carregar assistente:', err);
+    document.getElementById("nome").innerText = "Erro ao carregar assistente.";
+  }
+});
