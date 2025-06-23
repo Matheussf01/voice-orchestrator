@@ -3,7 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const mysql = require('mysql2/promise');
-const fetch = require('node-fetch'); // se não tiver, instale: npm install node-fetch@2
+const fetch = require('node-fetch');
 
 dotenv.config();
 
@@ -12,7 +12,6 @@ app.use(cors());
 app.use(express.json());
 app.use('/static', express.static(path.join(__dirname, '../dist')));
 
-// Configuração do banco
 const dbConfig = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -20,7 +19,19 @@ const dbConfig = {
   database: process.env.DB_NAME,
 };
 
-// Rota dinâmica para pegar signed-url com slug
+// Testa a conexão ao iniciar
+(async () => {
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    await conn.ping();
+    console.log('✅ Conexão com o banco de dados OK');
+    await conn.end();
+  } catch (err) {
+    console.error('❌ Erro ao conectar no banco de dados:', err.message);
+  }
+})();
+
+// Rota: signed-url
 app.get('/:slug/api/signed-url', async (req, res) => {
   const { slug } = req.params;
 
@@ -34,34 +45,25 @@ app.get('/:slug/api/signed-url', async (req, res) => {
     }
 
     const agentId = rows[0].elevenlabs_voice_id;
-    const xiApiKey = process.env.XI_API_KEY;
 
-    if (!xiApiKey) {
-      return res.status(500).json({ error: 'XI_API_KEY não configurada' });
-    }
-
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId}`,
-      {
-        method: 'GET',
-        headers: { 'xi-api-key': xiApiKey },
-      }
-    );
+    const response = await fetch(`https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId}`, {
+      method: 'GET',
+      headers: { 'xi-api-key': process.env.XI_API_KEY },
+    });
 
     if (!response.ok) {
-      throw new Error('Failed to get signed URL from ElevenLabs');
+      throw new Error(`Erro na ElevenLabs: ${response.statusText}`);
     }
 
     const data = await response.json();
-
-    return res.json({ signedUrl: data.signed_url });
+    res.json({ signedUrl: data.signed_url });
   } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ error: 'Erro ao buscar signed URL' });
+    console.error('❌ Erro signed-url:', error.message);
+    res.status(500).json({ error: 'Erro ao buscar signed URL' });
   }
 });
 
-// Rota dinâmica para pegar agentId pelo slug
+// Rota: agentId
 app.get('/:slug/api/getAgentId', async (req, res) => {
   const { slug } = req.params;
 
@@ -74,15 +76,15 @@ app.get('/:slug/api/getAgentId', async (req, res) => {
       return res.status(404).json({ error: 'Assistente não encontrado' });
     }
 
-    return res.json({ agentId: rows[0].elevenlabs_voice_id });
+    res.json({ agentId: rows[0].elevenlabs_voice_id });
   } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ error: 'Erro ao buscar agentId' });
+    console.error('❌ Erro getAgentId:', error.message);
+    res.status(500).json({ error: 'Erro ao buscar agentId' });
   }
 });
 
-// Rota para pegar dados do assistente pelo slug
-app.get('/:slug', async (req, res) => {
+// Rota: dados do assistente
+app.get('/api/:slug', async (req, res) => {
   const { slug } = req.params;
 
   try {
@@ -94,31 +96,26 @@ app.get('/:slug', async (req, res) => {
       return res.status(404).json({ error: 'Assistente não encontrado' });
     }
 
-    return res.json(rows[0]);
+    res.json(rows[0]);
   } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ error: 'Erro ao buscar assistente' });
+    console.error('❌ Erro dados assistente:', error.message);
+    res.status(500).json({ error: 'Erro ao buscar assistente' });
   }
 });
 
-// Servir index.html para todas as outras rotas que não bateram com as anteriores
+// Frontend
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
+
+// Captura erros não tratados
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+// ⬇️ ESSENCIAL no Railway
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server rodando na porta ${PORT}`);
+  console.log(`🚀 Server rodando na porta ${PORT}`);
 });
-
-
-
-app.use((err, req, res, next) => {
-  console.error('Erro global:', err);
-  res.status(500).json({ error: 'Erro interno do servidor', message: err.message });
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-});
-

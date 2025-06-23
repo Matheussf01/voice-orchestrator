@@ -5,8 +5,8 @@
   "scripts": {
     "start:backend": "node backend/server.js",
     "build": "webpack --mode production",
-    "dev": "concurrently \"npm run start:backend\" \"webpack serve --mode development\"",
     "start": "npm run build && node backend/server.js",
+    "dev": "concurrently \"npm run start:backend\" \"webpack serve --mode development\"",
     "start:python": "npm run build && uvicorn backend.server:app --reload --port 3000"
   },
   "dependencies": {
@@ -20,7 +20,7 @@
   "devDependencies": {
     "concurrently": "^8.0.1",
     "copy-webpack-plugin": "^11.0.0",
-    "webpack": "^5.88.0",
+    "webpack": "^5.99.9",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.1"
   }

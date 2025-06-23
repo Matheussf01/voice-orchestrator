@@ -123,25 +123,26 @@ window.addEventListener('error', function(event) {
     console.error('Global error:', event.error);
 });
 
+
+
 window.addEventListener('DOMContentLoaded', async () => {
-  const slug = window.location.pathname.split("/")[1];
+  const slug = window.location.pathname.slice(1); // pega tudo depois da barra inicial
 
   try {
-    const res = await fetch(`/${slug}`);
-    if (!res.ok) {
+    const res = await fetch(`/api/${slug}`); // chama API nova
+    const data = await res.json();
+
+    if (data.error) {
       document.body.innerHTML = "<h2>Assistente não encontrado</h2>";
       return;
     }
 
-    const data = await res.json();
-
-    // Aplicar dados na interface
+    // Atualiza a página com os dados
     document.querySelector("h1").innerText = data.nome;
     document.querySelector("h2").innerText = data.descricao;
     document.querySelector("img").src = data.foto_url;
     document.body.style.backgroundImage = `url(${data.background_image})`;
 
-    // Armazena ID do ElevenLabs
     window.elevenLabsVoiceId = data.elevenlabs_voice_id;
 
   } catch (e) {
