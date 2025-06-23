@@ -13,9 +13,9 @@ async function requestMicrophonePermission() {
     }
 }
 
-async function getSignedUrl() {
+async function getSignedUrl(slug) {
     try {
-        const response = await fetch('/api/signed-url');
+        const response = await fetch(`/${slug}/api/signed-url`);
         if (!response.ok) throw new Error('Failed to get signed URL');
         const data = await response.json();
         return data.signedUrl;
@@ -25,10 +25,16 @@ async function getSignedUrl() {
     }
 }
 
-async function getAgentId() {
-    const response = await fetch('/api/getAgentId');
-    const { agentId } = await response.json();
-    return agentId;
+async function getAgentId(slug) {
+    try {
+        const response = await fetch(`/${slug}/api/getAgentId`);
+        if (!response.ok) throw new Error('Failed to get agent ID');
+        const { agentId } = await response.json();
+        return agentId;
+    } catch (error) {
+        console.error('Error getting agent ID:', error);
+        throw error;
+    }
 }
 
 function updateStatus(isConnected) {
@@ -56,11 +62,12 @@ function updateSpeakingStatus(mode) {
     console.log('Speaking status updated:', { mode, isSpeaking }); // Debug log
 }
 
-
 async function startConversation() {
     const startButton = document.getElementById('startButton');
     const endButton = document.getElementById('endButton');
     
+    const slug = window.location.pathname.split("/")[1];
+
     try {
         const hasPermission = await requestMicrophonePermission();
         if (!hasPermission) {
@@ -68,12 +75,12 @@ async function startConversation() {
             return;
         }
 
-        const signedUrl = await getSignedUrl();
-        //const agentId = await getAgentId(); // You can switch to agentID for public agents
-        
+        const signedUrl = await getSignedUrl(slug);
+        // const agentId = await getAgentId(slug); // Caso queira usar agentId
+
         conversation = await Conversation.startSession({
             signedUrl: signedUrl,
-            //agentId: agentId, // You can switch to agentID for public agents
+            // agentId: agentId,
             onConnect: () => {
                 console.log('Connected');
                 updateStatus(true);
@@ -92,7 +99,7 @@ async function startConversation() {
                 alert('An error occurred during the conversation.');
             },
             onModeChange: (mode) => {
-                console.log('Mode changed:', mode); // Debug log to see exact mode object
+                console.log('Mode changed:', mode);
                 updateSpeakingStatus(mode);
             }
         });
@@ -116,29 +123,27 @@ window.addEventListener('error', function(event) {
     console.error('Global error:', event.error);
 });
 
-
 window.addEventListener('DOMContentLoaded', async () => {
   const slug = window.location.pathname.split("/")[1];
 
   try {
     const res = await fetch(`/${slug}`);
-    const data = await res.json();
-
-    if (data.detail === "Assistente não encontrado") {
+    if (!res.ok) {
       document.body.innerHTML = "<h2>Assistente não encontrado</h2>";
       return;
     }
+
+    const data = await res.json();
 
     // Aplicar dados na interface
     document.querySelector("h1").innerText = data.nome;
     document.querySelector("h2").innerText = data.descricao;
     document.querySelector("img").src = data.foto_url;
-    document.body.style.backgroundColor = data.background_image;
+    document.body.style.backgroundImage = `url(${data.background_image})`;
 
     // Armazena ID do ElevenLabs
     window.elevenLabsVoiceId = data.elevenlabs_voice_id;
 
-    // Aqui você ativa sua função de chamada ElevenLabs com o voiceId
   } catch (e) {
     console.error(e);
   }
