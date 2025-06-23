@@ -107,12 +107,18 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server rodando na porta ${PORT}`);
 });
+
 
 
 app.use((err, req, res, next) => {
   console.error('Erro global:', err);
   res.status(500).json({ error: 'Erro interno do servidor', message: err.message });
 });
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+

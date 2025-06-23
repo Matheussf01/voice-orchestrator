@@ -6,7 +6,7 @@
     "start:backend": "node backend/server.js",
     "build": "webpack --mode production",
     "dev": "concurrently \"npm run start:backend\" \"webpack serve --mode development\"",
-    "start": "node backend/server.js",
+    "start": "npm run build && node backend/server.js",
     "start:python": "npm run build && uvicorn backend.server:app --reload --port 3000"
   },
   "dependencies": {
