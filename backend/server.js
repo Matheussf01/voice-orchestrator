@@ -62,10 +62,16 @@ app.get('/api/assistente/:slug', async (req, res) => {
   }
 });
 
-// ✅ Serve index.html para qualquer slug
-app.get('/:slug', (req, res) => {
+// Essa rota vem **por último**, e só responde se nenhuma outra respondeu
+app.get('*', (req, res) => {
+  // Ignora requisições para arquivos (com ponto na URL, como .js, .css, .png etc)
+  if (req.path.includes('.') || req.path.startsWith('/api')) {
+    return res.status(404).send('Not found');
+  }
+
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
+
 
 // Inicia o servidor
 app.listen(port, () => {
