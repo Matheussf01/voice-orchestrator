@@ -115,4 +115,3 @@ document.getElementById('endButton').addEventListener('click', endConversation);
 window.addEventListener('error', function(event) {
     console.error('Global error:', event.error);
 });
-

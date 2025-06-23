@@ -3,6 +3,7 @@ body {
     margin: 0;
     padding: 0;
     background: rgb(0,0,0);
+    background-image: url(https://techalliance.com.br/avatar/back-expo.png);
     background-size: cover; /* Ajusta o tamanho da imagem para cobrir o fundo */
     background-position: center; /* Centraliza a imagem */
     background-repeat: no-repeat; /* Evita repetição */
